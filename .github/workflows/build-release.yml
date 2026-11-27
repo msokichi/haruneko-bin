@@ -1,0 +1,22 @@
+name: build-release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package
+        run: |
+          docker run --rm -v "$PWD:/pkg" archlinux:latest /bin/bash -c \
+            "cd /pkg && pacman -Syu --noconfirm base-devel squashfs-tools && makepkg -s --noconfirm --nocheck"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: haruneko-bin
+          path: "*.pkg.tar.zst"

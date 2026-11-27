@@ -1,0 +1,19 @@
+name: check-upstream
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch latest upstream release
+        run: |
+          curl -s https://api.github.com/repos/manga-download/haruneko/releases/latest \
+            | jq -r '.tag_name'

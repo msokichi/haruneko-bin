@@ -1,0 +1,10 @@
+# Build artifacts
+pkg/
+src/
+*.pkg.tar.*
+*.pkg.tar.zst
+*.snap
+*.deb
+# Editor
+*.swp
+*~
