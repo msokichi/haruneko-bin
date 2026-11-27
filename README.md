@@ -41,4 +41,12 @@ For a manual runtime check, launch HakuNeko from the desktop menu, change a pref
 
 The build workflow runs on pushes to `main` and pull requests. The workflow checks the package sources and metadata, builds as an unprivileged user, and tests an installed package under Xvfb before uploading a CI artifact.
 
-To refresh the build environment, select the current official Arch `base-devel` image and replace the workflow’s pin with its Linux amd64 manifest digest. Pacman installs tools and dependencies from the signed rolling Arch repositories. Review each GitHub Action’s release before replacing its full commit SHA and version comment, then verify the build on a pull request.
+To refresh the build environment, select the current official Arch `base-devel` image and update the Linux amd64 manifest digest in both workflows. Pacman installs tools and dependencies from the signed rolling Arch repositories. Review each GitHub Action’s release before replacing its full commit SHA and version comment, then verify the build on a pull request.
+
+## Upstream updates
+
+**Check upstream** runs every six hours and can also be started manually from `main`. It checks the GitHub release list for a newer canary, verifies the asset against GitHub’s digest when available, inspects the Snap layout, and proposes updated `PKGBUILD` and `.SRCINFO` files in a pull request. Review the packaging CI results before merging.
+
+With the built-in workflow token, enable **Allow GitHub Actions to create and approve pull requests** in the repository’s Actions settings. GitHub requires a maintainer to approve CI on PRs opened with that token. To start CI automatically, set the optional `UPSTREAM_PR_TOKEN` secret to a fine-grained token scoped to this repository with **Contents** and **Pull requests** read/write permissions. [GitHub token behavior](https://docs.github.com/en/actions/concepts/security/github_token)
+
+On Arch, run `python -B scripts/update-package.py --check` to print a newer tag. To inspect the proposed files locally, run `python -B scripts/update-package.py --output "$(mktemp -d)"` with `curl`, `squashfs-tools`, and `makepkg` installed. The updater writes the proposal to the output directory and leaves the checkout intact.
