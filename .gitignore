@@ -1,10 +1,16 @@
-# Build artifacts
-pkg/
-src/
-*.pkg.tar.*
-*.pkg.tar.zst
+# makepkg build directories
+/src/
+/pkg/
+
+# Downloaded upstream artifacts
 *.snap
-*.deb
-# Editor
-*.swp
-*~
+/haruneko-*.UNLICENSE
+/haruneko-*.png
+
+# Built packages
+*.pkg.tar.*
+*.log
+
+# Editor configurations
+.idea/
+.vscode/
