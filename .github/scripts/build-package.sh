@@ -5,7 +5,7 @@ set -euo pipefail
 mapfile -t dependencies < <(awk '
     $1 ~ /^(depends|makedepends|checkdepends)(_x86_64)?$/ && $2 == "=" { print $3 }
 ' /workspace/.SRCINFO)
-pacman -Syu --noconfirm --needed -- desktop-file-utils namcap shellcheck \
+pacman -Syu --noconfirm --needed -- desktop-file-utils namcap python shellcheck \
     dbus xorg-server-xvfb xorg-xauth xorg-xwininfo "${dependencies[@]}"
 
 id -u builder >/dev/null 2>&1 || useradd --create-home builder
@@ -14,11 +14,12 @@ cp /workspace/{PKGBUILD,.SRCINFO,haruneko.sh,haruneko.desktop} .
 chown builder:builder PKGBUILD .SRCINFO haruneko.sh haruneko.desktop
 
 shellcheck -e SC2034,SC2154 -s bash PKGBUILD
-shellcheck haruneko.sh /workspace/.github/scripts/build-package.sh
+shellcheck haruneko.sh /workspace/.github/scripts/{build-package,open-upstream-pr}.sh
 desktop-file-validate haruneko.desktop
+runuser -u builder -- python -B -m unittest discover -s /workspace/tests
 runuser -u builder -- bash -euo pipefail -c '
     makepkg --printsrcinfo | diff -u .SRCINFO -
-    makepkg --verifysource
+    makepkg --verifysource --force
     makepkg --cleanbuild --force
 '
 

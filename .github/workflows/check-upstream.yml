@@ -1,19 +1,55 @@
-name: check-upstream
+name: Check upstream
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "23 */6 * * *"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: haruneko-upstream
+  cancel-in-progress: false
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - name: Fetch latest upstream release
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check for a newer canary
+        id: upstream
         run: |
-          curl -s https://api.github.com/repos/manga-download/haruneko/releases/latest \
-            | jq -r '.tag_name'
+          tag=$(python3 -B scripts/update-package.py --check)
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'Release check: %s\n' "${tag:-Haruneko is up to date}"
+
+      - name: Inspect upstream and prepare package files
+        if: steps.upstream.outputs.tag != ''
+        run: |
+          mkdir -p "$RUNNER_TEMP/haruneko-update"
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --volume "$RUNNER_TEMP/haruneko-update:/out" \
+            docker.io/library/archlinux@sha256:a1d4b509c51fc68dcc7ee1f88342fe26b1f65e6775c3aff26f196141e6c76a6f \
+            bash -euc '
+              pacman -Syu --needed --noconfirm -- squashfs-tools python
+              useradd --create-home updater
+              runuser -u updater -- python -B /workspace/scripts/update-package.py \
+                --source /workspace --output /home/updater/update
+              if [[ -f /home/updater/update/PKGBUILD ]]; then
+                install -m644 /home/updater/update/{PKGBUILD,.SRCINFO} /out/
+              fi
+            '
+
+      - name: Open update pull request
+        if: steps.upstream.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_PR_TOKEN || github.token }}
+        run: bash .github/scripts/open-upstream-pr.sh "$RUNNER_TEMP/haruneko-update"
