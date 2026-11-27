@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=HakuNeko
-Comment=Manga, Anime & Novel Downloader
-Exec=haruneko %U
+Comment=Download manga, anime, and novels
+Exec=haruneko
 Icon=haruneko
 Type=Application
 Categories=Network;FileTransfer;

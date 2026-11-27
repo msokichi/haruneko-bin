@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec /opt/haruneko/hakuneko-electron --no-sandbox "$@"
+exec /opt/haruneko/hakuneko-electron "$@"
